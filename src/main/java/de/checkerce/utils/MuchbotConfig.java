@@ -20,4 +20,5 @@ public class MuchbotConfig {
 
     public static final String MAIN_PROMPT_FILE = "src/main/java/de/checkerce/data/mainPrompt.txt";
     public static final String PERSONALITY_PROMPT_FILE = "src/main/java/de/checkerce/data/personality.txt";
+    public static final String IMAGE_GENERATION_PROMPT_PROMPT = "Du sendest diese Discord nachricht, erstelle einen kurzen prompt womit ein bild generiert wird welches an die nachricht angehängt wird\n\nNachricht: ";
 }
