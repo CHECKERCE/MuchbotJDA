@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 
 public class PostRequest {
     public static String createRequest(String urlStr, String body, String OPENAI_API_KEY) {
+        body = body.replace("\n", "\\n");
         try {
             // URL for the OpenAI API endpoint
             URL url = new URL(urlStr);
@@ -33,6 +34,10 @@ public class PostRequest {
 
             // Check the response code and read the response (optional)
             int responseCode = connection.getResponseCode();
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                System.out.println(connection.getResponseMessage());
+                throw new RuntimeException("Failed : HTTP error code : " + responseCode);
+            }
 
             try (InputStream is = connection.getInputStream();
                  BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {

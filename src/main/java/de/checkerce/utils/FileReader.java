@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Scanner;
 
 public class FileReader {
-    public static String[] readFile(String filename) {
+    public static String readFile(String filename) {
         List<String> lines = new ArrayList<String>();
         try {
             File myObj = new File(filename);
@@ -16,7 +16,9 @@ public class FileReader {
                 String data = myReader.nextLine();
                 lines.add(data);
             }
-            return lines.toArray(new String[lines.size()]);
+            String data = String.join("\n", lines);
+            myReader.close();
+            return data;
         } catch (FileNotFoundException e) {
             System.out.println("Error: File not Found");
             e.printStackTrace();

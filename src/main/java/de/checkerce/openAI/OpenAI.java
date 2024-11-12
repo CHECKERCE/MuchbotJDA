@@ -2,6 +2,10 @@ package de.checkerce.openAI;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,17 +13,18 @@ import java.util.List;
 
 public class OpenAI {
     private static final String CHAT_COMPLETIONS_URL = "https://api.openai.com/v1/chat/completions";
+    private static final String IMAGE_COMPLETIONS_URL = "https://api.openai.com/v1/images/generations";
     private final String OPENAI_API_KEY;
 
     public OpenAI(String OPENAI_API_KEY) {
         this.OPENAI_API_KEY = OPENAI_API_KEY;
     }
 
-    public Completion chatCompletion(Message[] messages, String model) throws IOException, InterruptedException {
+    public ChatCompletion chatCompletion(Message[] messages, String model) throws IOException, InterruptedException {
         return chatCompletion(messages, model, 0);
     }
 
-    public Completion chatCompletion(Message[] messages, String model, int maxTokens) throws IOException, InterruptedException {
+    public ChatCompletion chatCompletion(Message[] messages, String model, int maxTokens) throws IOException, InterruptedException {
 
         String body = chatCompletionBody(messages, model, maxTokens);
 
@@ -64,7 +69,7 @@ public class OpenAI {
             choicesList.add(new Choice(message, finishReason, index));
         });
 
-        return new Completion(id, object, created, completionModel, usageObject, choicesList.toArray(new Choice[0]));
+        return new ChatCompletion(id, object, created, completionModel, usageObject, choicesList.toArray(new Choice[0]));
     }
 
     private String chatCompletionBody(Message[] messages, String model) {
@@ -84,4 +89,67 @@ public class OpenAI {
 
         return body.toString();
     }
+
+    public ImageCompletion imageCompletion(String prompt, String model, int n, int[] size) throws IOException, InterruptedException {
+
+        if (size.length != 2) {
+            throw new IllegalArgumentException("Size must be an array of length 2");
+        }
+
+        String body = imageCompletionBody(prompt, model, n, size);
+
+        String response = PostRequest.createRequest(IMAGE_COMPLETIONS_URL, body, OPENAI_API_KEY);
+        System.out.println(response);
+
+        assert response != null;
+        JSONObject jsonResponse = new JSONObject(response);
+
+        Timestamp created = new Timestamp(jsonResponse.getLong("created"));
+        JSONArray data = jsonResponse.getJSONArray("data");
+
+        List<URL> ImageURLs = new ArrayList<>();
+        data.forEach(datum -> {
+            JSONObject dataObject = (JSONObject) datum;
+            String url = dataObject.getString("url");
+            URI uri;
+            try {
+                uri = new URI(url);
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+
+            try {
+                ImageURLs.add(uri.toURL());
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        return new ImageCompletion(created, ImageURLs.toArray(new URL[0]));
+    }
+
+    private String imageCompletionBody(String prompt, String model, int n, int[] size) {
+
+        if (size.length != 2) {
+            throw new IllegalArgumentException("Size must be an array of length 2");
+        }
+
+        StringBuilder body = new StringBuilder();
+        body.append("{\"prompt\": \"");
+        body.append(prompt);
+        body.append("\", \"model\": \"");
+        body.append(model);
+        body.append("\", \"n\": ");
+        body.append(n);
+        body.append(", \"size\": \"");
+        body.append(size[0]);
+        body.append("x");
+        body.append(size[1]);
+        body.append("\"}");
+
+        return body.toString();
+    }
+
+
+
 }
